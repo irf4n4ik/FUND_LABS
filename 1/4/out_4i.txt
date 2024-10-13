@@ -1,0 +1,4 @@
+1 string has 5 letters
+2 string has 10 letters
+3 string has 0 letters
+4 string has 3 letters

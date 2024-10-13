@@ -1,0 +1,4 @@
+Hello, мир!
+This is line 2.
+1234567890
+End.

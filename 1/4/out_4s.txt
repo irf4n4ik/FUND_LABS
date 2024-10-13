@@ -1,0 +1,2 @@
+1 string has 12 special symbols
+2 string has 12 special symbols
