@@ -3,6 +3,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <limits.h>
+#include <unistd.h>
+
+#define BUFFER_SIZE 1024
 
 char** read_tokens(const char* filename, int* count) {
     FILE* file = fopen(filename, "r");
@@ -12,7 +16,7 @@ char** read_tokens(const char* filename, int* count) {
     }
 
     char** tokens = NULL;
-    char buffer[1024];
+    char buffer[BUFFER_SIZE];
     *count = 0;
 
     while (fscanf(file, "%1023s", buffer) == 1) {
@@ -63,8 +67,33 @@ int file_exists(const char* filename) {
     return (stat(filename, &buffer) == 0);
 }
 
+char* get_absolute_path(const char* path) {
+    char* absolute_path = malloc(PATH_MAX);
+    if (realpath(path, absolute_path) == NULL) {
+        free(absolute_path);
+        return NULL;
+    }
+    return absolute_path;
+}
+
+int paths_are_equal(const char* file1, const char* file2) {
+    char* abs_file1 = get_absolute_path(file1);
+    char* abs_file2 = get_absolute_path(file2);
+    
+    if (!abs_file1 || !abs_file2) {
+        free(abs_file1);
+        free(abs_file2);
+        return 0;
+    }
+    
+    int result = strcmp(abs_file1, abs_file2) == 0;
+    free(abs_file1);
+    free(abs_file2);
+    return result;
+}
+
 void process_r_flag(const char* file1, const char* file2, const char* output_file) {
-    if (strcmp(file1, output_file) == 0 || strcmp(file2, output_file) == 0) {
+    if (paths_are_equal(file1, output_file) || paths_are_equal(file2, output_file)) {
         printf("Error: Input and output file paths must be different.\n");
         return;
     }
@@ -118,7 +147,7 @@ void process_r_flag(const char* file1, const char* file2, const char* output_fil
 }
 
 void convert_to_base4(char* token) {
-    char buffer[1024] = "";
+    char buffer[BUFFER_SIZE] = "";
     char temp[16];
 
     for (int i = 0; token[i]; ++i) {
@@ -130,41 +159,48 @@ void convert_to_base4(char* token) {
         int index = 0;
 
         while (ascii_value > 0) {
+            if (index >= (int)sizeof(base4) - 1) {
+                printf("Error: Buffer overflow in base4 conversion.\n");
+                return;
+            }
             base4[index++] = '0' + (ascii_value % 4);
             ascii_value /= 4;
         }
         base4[index] = '\0';
 
-        for (int j = 0; j < index / 2; ++j) {
-            char temp_char = base4[j];
-            base4[j] = base4[index - 1 - j];
-            base4[index - 1 - j] = temp_char;
+        if (strlen(buffer) + strlen(base4) >= BUFFER_SIZE) {
+            printf("Error: Buffer overflow while converting to base4.\n");
+            return;
         }
 
         strcat(buffer, base4);
-        if (token[i + 1]) strcat(buffer, "");
     }
 
     strcpy(token, buffer);
 }
 
 void convert_to_base8(char* token) {
-    char buffer[1024] = "";
+    char buffer[BUFFER_SIZE] = "";
     char temp[16];
 
     for (int i = 0; token[i]; ++i) {
         int ascii_value = (int)token[i];
 
         sprintf(temp, "%o", ascii_value);
+
+        if (strlen(buffer) + strlen(temp) >= BUFFER_SIZE) {
+            printf("Error: Buffer overflow while converting to base8.\n");
+            return;
+        }
+
         strcat(buffer, temp);
-        if (token[i + 1]) strcat(buffer, "");
     }
 
     strcpy(token, buffer);
 }
 
 void process_a_flag(const char* input_file, const char* output_file) {
-    if (strcmp(input_file, output_file) == 0) {
+    if (paths_are_equal(input_file, output_file)) {
         printf("Error: Input and output file paths must be different.\n");
         return;
     }
