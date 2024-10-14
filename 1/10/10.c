@@ -18,16 +18,30 @@ int my_pow(int n, int k) {
 int in_10_base(int base, char* number) {
     int ans = 0;
     int len = strlen(number);
+    int sign = 1;
+    int start_index = 0;
 
-    for (int i = 0; i < len; i++) {
+    if (number[0] == '-') {
+        sign = -1;
+        start_index = 1;
+    }
+
+    for (int i = start_index; i < len; i++) {
         int digit = TO_DIG(number[i]);
         if (digit == -1 || digit >= base) {
             printf("Error: digit %c exceeds base %d\n", number[i], base);
             return -1;
         }
-        ans += digit * my_pow(base, len - 1 - i);
+        
+        if (ans > (INT_MAX - digit) / base) {
+            printf("Error: overflow occurred for number %s\n", number);
+            return -1;
+        }
+        
+        ans = ans * base + digit;
     }
-    return ans;
+
+    return ans * sign;
 }
 
 void to_base(int base, int number) {
@@ -38,10 +52,12 @@ void to_base(int base, int number) {
 
     char based_number[BUFSIZ];
     int len = 0;
+
+    int abs_number = abs(number);
     
-    while (number > 0) {
-        based_number[len++] = TO_CHAR(number % base);
-        number /= base;
+    while (abs_number > 0) {
+        based_number[len++] = TO_CHAR(abs_number % base);
+        abs_number /= base;
     }
 
     // Реверс строки
@@ -51,6 +67,12 @@ void to_base(int base, int number) {
         based_number[len - 1 - i] = temp;
     }
     based_number[len] = '\0';
+
+    // Убираем нули
+    while (len > 1 && based_number[0] == '0') {
+        memmove(based_number, based_number + 1, len--);
+        based_number[len] = '\0';
+    }
 
     printf("%d in base %d = %s\n", number, base, based_number);
 }
@@ -84,6 +106,11 @@ int main() {
         if (abs(tmp) > abs(max)) {
             max = tmp;
         }
+    }
+
+    if (max == 0) {
+        printf("No valid numbers entered.\n");
+        return 1;
     }
 
     printf("Max value in base 10 = %d\n", max);
