@@ -34,12 +34,12 @@ int in_10_base(int base, char* number) {
                 printf("Error: digit %c exceeds base %d\n", number[i], base);
                 return -1;
             }
-            
+
             if (ans > (INT_MAX - digit) / base) {
                 printf("Error: overflow occurred for number %s\n", number);
                 return -1;
             }
-            
+
             ans = ans * base + digit;
         } else {
             printf("Error: invalid character %c in number %s\n", number[i], number);
@@ -60,10 +60,14 @@ void to_base(int base, int number) {
     int len = 0;
 
     int abs_number = abs(number);
-    
+
     while (abs_number > 0) {
         based_number[len++] = TO_CHAR(abs_number % base);
         abs_number /= base;
+    }
+
+    if (number < 0) {
+        based_number[len++] = '-';
     }
 
     for (int i = 0; i < len / 2; i++) {
@@ -81,10 +85,27 @@ void to_base(int base, int number) {
     printf("%d in base %d = %s\n", number, base, based_number);
 }
 
+int compare_max(char* current, char* max, int base) {
+    int current_len = strlen(current);
+    int max_len = strlen(max);
+
+    if (current_len > max_len) return 1;
+    if (current_len < max_len) return 0;
+
+    for (int i = 0; i < current_len; i++) {
+        if (TO_DIG(current[i]) > TO_DIG(max[i])) {
+            return 1;
+        } else if (TO_DIG(current[i]) < TO_DIG(max[i])) {
+            return 0;
+        }
+    }
+    return 0;
+}
+
 int main() {
     int base;
-    char str[BUFSIZ];
-    int max = 0;
+    char str[66];
+    char max_number[65] = {0};
     char stop[] = "Stop";
 
     printf("Enter base (2-36): ");
@@ -102,25 +123,26 @@ int main() {
             break;
 
         int tmp = in_10_base(base, str);
-        if (tmp < 0) {
+        if (tmp == -1) {
             printf("Invalid number: %s\n", str);
             continue;
         }
 
-        if (abs(tmp) > abs(max)) {
-            max = tmp;
+        if (strlen(max_number) == 0 || compare_max(str, max_number, base)) {
+            strcpy(max_number, str);
         }
     }
 
-    if (max == 0) {
+    if (strlen(max_number) == 0) {
         printf("No valid numbers entered.\n");
         return 1;
     }
 
-    printf("Max value in base 10 = %d\n", max);
+    printf("Max value = %s in base %d\n", max_number, base);
 
+    int max_value = in_10_base(base, max_number);
     for (int tmp = 9; tmp <= 36; tmp += 9) {
-        to_base(tmp, abs(max));
+        to_base(tmp, max_value);
     }
 
     return 0;
