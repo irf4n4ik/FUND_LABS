@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 
     double result_a = integrate(f_a, 0.0, 1.0, epsilon);
     double result_b = integrate(f_b, 0.0, 1.0, epsilon);
-    double result_c = integrate(f_c, 0.0, 0.9999, epsilon);
+    double result_c = integrate(f_c, 0.0, 0.999, epsilon);
     double result_d = integrate(f_d, 0.0, 1.0, epsilon);
 
     printf("Integral a (ln(1+x)/x)  | %.10f\n", result_a);
