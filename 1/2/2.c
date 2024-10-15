@@ -1,9 +1,95 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
 
 #define MAX_ITERATIONS 1000000
+
+typedef enum Errors {
+    ERROR_NONE = 0,
+    ERROR_INVALID_ARGUMENTS,
+    ERROR_MULTIPLE_DECIMAL_POINTS,
+    ERROR_NON_NUMERIC_CHARACTER,
+    ERROR_NO_DECIMAL_POINT,
+    ERROR_EPSILON_LESS_THAN_ZERO
+} Errors;
+
+Errors validate_epsilon(const char *input);
+double my_atof(const char *str);
+void print_error(Errors error);
+
+Errors GetOpts(int argc, char** argv, double* epsilon) {
+    if (argc > 2) {
+        printf("Error: Too many arguments.\n");
+        printf("Usage: %s <epsilon>\n", argv[0]);
+        return ERROR_INVALID_ARGUMENTS;
+    }
+    if (argc < 2) {
+        printf("Error: Missing epsilon argument.\n");
+        printf("Usage: %s <epsilon>\n", argv[0]);
+        return ERROR_INVALID_ARGUMENTS;
+    }
+
+    Errors err = validate_epsilon(argv[1]);
+    if (err != ERROR_NONE) {
+        print_error(err);
+        return err;
+    }
+
+    *epsilon = my_atof(argv[1]);
+
+    if (*epsilon <= 0) {
+        print_error(ERROR_EPSILON_LESS_THAN_ZERO);
+        return ERROR_EPSILON_LESS_THAN_ZERO;
+    }
+
+    return ERROR_NONE;
+}
+
+Errors validate_epsilon(const char *input) {
+    int decimal_count = 0;
+
+    for (const char *ptr = input; *ptr; ptr++) {
+        if (*ptr == '.') {
+            decimal_count++;
+            if (decimal_count > 1) {
+                return ERROR_MULTIPLE_DECIMAL_POINTS;
+            }
+        } else if (!isdigit(*ptr) && *ptr != '+' && *ptr != '-') {
+            return ERROR_NON_NUMERIC_CHARACTER;
+        }
+    }
+
+    if (decimal_count == 0) {
+        return ERROR_NO_DECIMAL_POINT;
+    }
+
+    return ERROR_NONE;
+}
+
+void print_error(Errors error) {
+    switch (error) {
+        case ERROR_MULTIPLE_DECIMAL_POINTS:
+            printf("Error: Multiple decimal points in epsilon.\n");
+            break;
+        case ERROR_NON_NUMERIC_CHARACTER:
+            printf("Error: Non-numeric character in epsilon.\n");
+            break;
+        case ERROR_NO_DECIMAL_POINT:
+            printf("Error: No decimal point found in epsilon.\n");
+            break;
+        case ERROR_EPSILON_LESS_THAN_ZERO:
+            printf("Error: Epsilon must be greater than zero.\n");
+            break;
+        case ERROR_INVALID_ARGUMENTS:
+            printf("Error: Invalid number of arguments.\n");
+            printf("Usage: %s <epsilon>\n", "program_name");
+            break;
+        default:
+            printf("Error: Unknown error.\n");
+            break;
+    }
+}
 
 double my_atof(const char *str) {
     double result = 0.0;
@@ -32,204 +118,187 @@ double my_atof(const char *str) {
         }
     }
 
-    result += fraction / pow(10.0, decimal_position);
+    if (decimal_position > 0) {
+        result += fraction / pow(10.0, decimal_position);
+    }
+
     return sign * result;
 }
 
-int validate_epsilon(const char *input) {
-    int decimal_count = 0;
+double Factorial(int n){
+    int answer = 1;
+    for (int i = 2; i <= n; i++) {
+        answer *= i;
+    }
 
-    for (const char *ptr = input; *ptr; ptr++) {
-        if (*ptr == '.') {
-            decimal_count++;
-            if (decimal_count > 1) {
-                printf("Invalid input for epsilon: multiple decimal points.\n");
-                return 1;
-            }
-        } else if (!isdigit(*ptr) && *ptr != '+' && *ptr != '-') {
-            printf("Invalid input for epsilon: contains non-numeric characters.\n");
-            return 1;
+    return answer * 1.00;
+}
+
+double for_e_limit(double n) {
+    return pow(1.0 + 1 / n, n);
+}
+
+// Вычисления:
+
+// e
+double e_limit(double epsilon) {
+    double n = 1;
+    double current_element = 1;
+    double last_element = 0;
+    while (fabs(current_element - last_element) >= epsilon) {
+        last_element = current_element;
+        n *= 2;
+        current_element = for_e_limit(n);
+    }
+    return current_element;
+}
+
+double e_series(double epsilon) {
+    double n = 1.0;
+    double current_element = 1.0000;
+    double summ = 1.0;
+    while (fabs(current_element) >= epsilon) {
+        current_element /= n;
+        summ += current_element;
+        n++;
+    }
+    return summ;
+}
+
+double e_equation(double epsilon) {
+    double a = 1.00;
+    double b = 5.00;
+    double x;
+    while (fabs(b - a) >= epsilon) {
+        x = (b + a) / 2;
+        if (log(x) > 1) {
+            b = x;
+        } else {
+            a = x;
         }
     }
-
-    if (decimal_count == 0) {
-        printf("Invalid input for epsilon: no decimal point found.\n");
-        return 1;
-    }
-
-    return 0;
-}
-
-//e
-double calculate_e_limit(double epsilon) {
-    double e_prev = 0.0, e_current = 1.0;
-    int n = 1, iteration = 0;
-
-    while (fabs(e_current - e_prev) > epsilon && iteration < MAX_ITERATIONS) {
-        e_prev = e_current;
-        e_current = pow((1.0 + 1.0 / n), n);
-        n++;
-        iteration++;
-    }
-
-    return e_current;
-}
-
-double calculate_e_series(double epsilon) {
-    double e = 1.0, term = 1.0;
-    int n = 1, iteration = 0;
-
-    while (term > epsilon && iteration < MAX_ITERATIONS) {
-        term /= n;
-        e += term;
-        n++;
-        iteration++;
-    }
-
-    return e;
-}
-
-double calculate_e_equation(double epsilon) {
-    double x = 2.0, step = 1.0;
-    int iteration = 0;
-
-    while (fabs(log(x) - 1.0) > epsilon && iteration < MAX_ITERATIONS) {
-        x += step * (1.0 - log(x));
-        iteration++;
-    }
-
     return x;
 }
 
-//Pi
-double calculate_pi_limit(double epsilon) {
+// Pi
+double pi_limit(double epsilon) {
+    double n = 1.0;
+    double term = 4.0;
     double pi = 0.0;
-    double term;
-    int n = 0, iteration = 0;
+    double sign = 1.0;
 
-    do {
-        term = pow(-1, n) / (2.0 * n + 1.0);
+    while (fabs(term) >= epsilon) {
         pi += term;
-        n++;
-        iteration++;
-    } while (fabs(term) > epsilon && iteration < MAX_ITERATIONS);
+        n += 2;
+        sign *= -1;
+        term = sign * (4.0 / n);
+    }
 
-    return 4.0 * pi;
+    return pi;
 }
 
-double calculate_pi_series(double epsilon) {
+double pi_series(double epsilon) {
+    double n = 1.0;
+    double current_element = 4.0;
     double pi = 0.0;
-    double term;
-    int n = 1, iteration = 0;
-
-    do {
-        term = pow(-1, n - 1) / (2.0 * n - 1.0);
-        pi += term;
-        n++;
-        iteration++;
-    } while (fabs(term) > epsilon && iteration < MAX_ITERATIONS);
-
-    return 4.0 * pi;
+    while (fabs(current_element) >= epsilon) {
+        pi += current_element;
+        n += 2;
+        current_element = 4.0 * pow(-1, (int)(n / 2)) / n;
+    }
+    return pi;
 }
 
-double calculate_pi_equation(double epsilon) {
-    double x = 3.14;
-    double step;
-    int iteration = 0;
-
-    do {
-        double f_x = sin(x);
-        double f_prime_x = cos(x);
-
-        if (fabs(f_prime_x) < 1e-10) {
-            break;
+double pi_equation(double epsilon) {
+    double a = 3.0;
+    double b = 4.0;
+    double x;
+    while (fabs(b - a) >= epsilon) {
+        x = (b + a) / 2;
+        if (sin(x) > 0) {
+            a = x;
+        } else {
+            b = x;
         }
-
-        step = f_x / f_prime_x;
-        x -= step;
-        iteration++;
-    } while (fabs(sin(x)) > epsilon && iteration < MAX_ITERATIONS);
-
+    }
     return x;
 }
 
-//ln2
-double calculate_ln2_limit(double epsilon) {
-    double ln2_prev = 0.0, ln2_current = 0.0;
-    int n = 1, iteration = 0;
-
-    do {
-        ln2_prev = ln2_current;
-        ln2_current = n * (pow(2, 1.0 / n) - 1);
+// ln(2)
+double ln2_limit(double epsilon) {
+    int n = 1;
+    double current_element = (pow(2, 1.00 / n) - 1) * n;
+    double last_element = 0;
+    while (fabs(current_element - last_element) >= epsilon) {
+        last_element = current_element;
         n++;
-        iteration++;
-    } while (fabs(ln2_current - ln2_prev) > epsilon && iteration < MAX_ITERATIONS);
-
-    return ln2_current;
+        current_element = (pow(2, 1.00 / n) - 1) * n;
+    }
+    return current_element;
 }
 
-double calculate_ln2_series(double epsilon) {
-    double ln2 = 0.0, term;
-    int n = 1, iteration = 0;
-
-    do {
-        term = pow(-1, n - 1) / n;
-        ln2 += term;
+double ln2_series(double epsilon) {
+    int n = 2;
+    double last_element = 0.0000;
+    double current_element = 1.0000;
+    while (fabs(current_element - last_element) >= epsilon) {
+        last_element = current_element;
+        current_element += (pow(-1, n - 1) / n) * 1.000;
         n++;
-        iteration++;
-    } while (fabs(term) > epsilon && iteration < MAX_ITERATIONS);
-
-    return ln2;
+    }
+    return current_element;
 }
 
-double calculate_ln2_equation(double epsilon) {
-    double x = 1.0, step = 0.1;
-    int iteration = 0;
+double ln2_equation(double epsilon) {
+    double a = 0.00;
+    double b = 3.00;
+    double x;
+    while (fabs(b - a) >= epsilon) {
+        x = (b + a) / 2;
+        if (exp(x) - 2 > 0) {
+            b = x;
+        } else {
+            a = x;
+        }
+    }
+    return x;
+}
 
-    while (fabs(exp(x) - 2.0) > epsilon && iteration < MAX_ITERATIONS) {
-        x += step * (2.0 - exp(x));
-        iteration++;
+// sqrt(2)
+double square_limit(double epsilon) {
+    double current_element = 1.0;
+    double last_element = 0;
+    while (fabs(last_element - current_element) >= epsilon) {
+        last_element = current_element;
+        current_element = (last_element + 2 / last_element) / 2;
+    }
+    return current_element;
+}
+
+double square_series(double epsilon) {
+    double current_element = 1.0;
+    double next_element = (current_element + 2 / current_element) / 2;
+
+    while (fabs(next_element - current_element) >= epsilon) {
+        current_element = next_element;
+        next_element = (current_element + 2 / current_element) / 2;
     }
 
-    return x;
+    return next_element;
 }
 
-//sqrt2
-double calculate_sqrt2_limit(double epsilon) {
-    double x = 1.0;
-    int iteration = 0;
-
-    while (fabs(x * x - 2.0) > epsilon && iteration < MAX_ITERATIONS) {
-        x = (x + 2.0 / x) / 2.0;
-        iteration++;
+double square_equation(double epsilon) {
+    double a = 0.00;
+    double b = 3.00;
+    double x;
+    while (fabs(b - a) >= epsilon) {
+        x = (b + a) / 2;
+        if (pow(x, 2) > 2) {
+            b = x;
+        } else {
+            a = x;
+        }
     }
-
-    return x;
-}
-
-double calculate_sqrt2_series(double epsilon) {
-    double x = 1.0, term;
-    int n = 1, iteration = 0;
-
-    do {
-        term = (2.0 - x * x) / (2.0 * x);
-        x += term;
-        n++;
-        iteration++;
-    } while (fabs(term) > epsilon && iteration < MAX_ITERATIONS);
-
-    return x;
-}
-
-double calculate_sqrt2_equation(double epsilon) {
-    double x = 1.5, step = 0.1;
-    int iteration = 0;
-
-    while (fabs(x * x - 2.0) > epsilon && iteration < MAX_ITERATIONS) {
-        x -= step * (x * x - 2.0);
-        iteration++;
-    }
-
     return x;
 }
 
@@ -238,45 +307,35 @@ void print_result(const char *name, const char *method, double result) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        printf("Usage: %s <epsilon>\n", argv[0]);
+    double epsilon;
+    Errors err = GetOpts(argc, argv, &epsilon);
+    if (err != ERROR_NONE) {
         return 1;
     }
 
-    if (validate_epsilon(argv[1]) != 0) {
-        return 1;
-    }
-
-    double epsilon = my_atof(argv[1]);
-    
-    if (epsilon <= 0) {
-        printf("Invalid input for epsilon: must be greater than zero.\n");
-        return 1;
-    }
-
-    printf("\nUsing epsilon: %.10Lf\n", epsilon);
+    printf("\nUsing epsilon: %.10f\n", epsilon);
     printf("---------------------------------------------------------\n");
     printf("%-20s | %-15s | %-10s\n", "Constant", "Method", "Result");
     printf("---------------------|-----------------|-----------------\n");
 
-    print_result("e", "Limit", calculate_e_limit(epsilon));
-    print_result("e", "Series", calculate_e_series(epsilon));
-    print_result("e", "Equation", calculate_e_equation(epsilon));
+    print_result("e", "Limit", e_limit(epsilon));
+    print_result("e", "Series", e_series(epsilon));
+    print_result("e", "Equation", e_equation(epsilon));
     printf("---------------------|-----------------|-----------------\n");
 
-    print_result("pi", "Limit", calculate_pi_limit(epsilon));
-    print_result("pi", "Series", calculate_pi_series(epsilon));
-    print_result("pi", "Equation", calculate_pi_equation(epsilon));
+    print_result("Pi", "Limit", pi_limit(epsilon));
+    print_result("Pi", "Series", pi_series(epsilon));
+    print_result("Pi", "Equation", pi_equation(epsilon));
     printf("---------------------|-----------------|-----------------\n");
 
-    print_result("ln(2)", "Limit", calculate_ln2_limit(epsilon));
-    print_result("ln(2)", "Series", calculate_ln2_series(epsilon));
-    print_result("ln(2)", "Equation", calculate_ln2_equation(epsilon));
+    print_result("ln(2)", "Limit", ln2_limit(epsilon));
+    print_result("ln(2)", "Series", ln2_series(epsilon));
+    print_result("ln(2)", "Equation", ln2_equation(epsilon));
     printf("---------------------|-----------------|-----------------\n");
 
-    print_result("sqrt(2)", "Limit", calculate_sqrt2_limit(epsilon));
-    print_result("sqrt(2)", "Series", calculate_sqrt2_series(epsilon));
-    print_result("sqrt(2)", "Equation", calculate_sqrt2_equation(epsilon));
+    print_result("sqrt(2)", "Limit", square_limit(epsilon));
+    print_result("sqrt(2)", "Series", square_series(epsilon));
+    print_result("sqrt(2)", "Equation", square_equation(epsilon));
     printf("---------------------|-----------------|-----------------\n");
 
     return 0;
