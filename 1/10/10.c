@@ -2,11 +2,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <limits.h>
 
 #define TO_UPPER(x) (x - (x >= 'a' && x <= 'z') * ('a' - 'A'))
 #define IS_DIG(x) ((x >= '0') && (x <= '9'))
 #define IS_LET(x) ((TO_UPPER(x) >= 'A') && (TO_UPPER(x) <= 'Z'))
-#define TO_DIG(x) (((IS_DIG(x)) * (x - '0') + (IS_LET(x)) * (TO_UPPER(x) - 'A' + 10)))
+#define TO_DIG(x) (((IS_DIG(x)) * (x - '0') + (IS_LET(x) && (x >= 'A' && x <= 'Z')) * (TO_UPPER(x) - 'A' + 10)))
 #define TO_CHAR(x) (((x >= 0) && (x <= 9)) * (x + '0') + ((x >= 10) && (x <= 35)) * (x + 'A' - 10))
 
 int my_pow(int n, int k) {
@@ -27,18 +28,23 @@ int in_10_base(int base, char* number) {
     }
 
     for (int i = start_index; i < len; i++) {
-        int digit = TO_DIG(number[i]);
-        if (digit == -1 || digit >= base) {
-            printf("Error: digit %c exceeds base %d\n", number[i], base);
+        if (IS_DIG(number[i]) || (IS_LET(number[i]) && (TO_UPPER(number[i]) >= 'A' && TO_UPPER(number[i]) <= 'Z'))) {
+            int digit = TO_DIG(number[i]);
+            if (digit == -1 || digit >= base) {
+                printf("Error: digit %c exceeds base %d\n", number[i], base);
+                return -1;
+            }
+            
+            if (ans > (INT_MAX - digit) / base) {
+                printf("Error: overflow occurred for number %s\n", number);
+                return -1;
+            }
+            
+            ans = ans * base + digit;
+        } else {
+            printf("Error: invalid character %c in number %s\n", number[i], number);
             return -1;
         }
-        
-        if (ans > (INT_MAX - digit) / base) {
-            printf("Error: overflow occurred for number %s\n", number);
-            return -1;
-        }
-        
-        ans = ans * base + digit;
     }
 
     return ans * sign;
@@ -60,7 +66,6 @@ void to_base(int base, int number) {
         abs_number /= base;
     }
 
-    // Реверс строки
     for (int i = 0; i < len / 2; i++) {
         char temp = based_number[i];
         based_number[i] = based_number[len - 1 - i];
@@ -68,7 +73,6 @@ void to_base(int base, int number) {
     }
     based_number[len] = '\0';
 
-    // Убираем нули
     while (len > 1 && based_number[0] == '0') {
         memmove(based_number, based_number + 1, len--);
         based_number[len] = '\0';
