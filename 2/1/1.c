@@ -1,0 +1,292 @@
+﻿#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_DEPRECATE  
+#define _CRT_NONSTDC_NO_DEPRECATE
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <time.h>
+#include <string.h>
+
+typedef enum kOpts {
+    OPT_L,
+    OPT_R,
+    OPT_U,
+    OPT_N,
+    OPT_C,
+    OPT_INVALID
+} kOpts;
+
+typedef struct {
+    kOpts option;
+    unsigned int seed;
+    char* str;
+    char** strings;
+    int count;
+} ProgramOptions;
+
+int my_strlen(const char* str) {
+    int length = 0;
+    while (str[length] != '\0') {
+        length++;
+    }
+    return length;
+}
+
+void my_strcpy(char* dest, const char* src) {
+    int i = 0;
+    while (src[i] != '\0') {
+        dest[i] = src[i];
+        i++;
+    }
+    dest[i] = '\0';
+}
+
+void my_strcat(char* dest, const char* src) {
+    int dest_len = my_strlen(dest);
+    int i = 0;
+    while (src[i] != '\0') {
+        dest[dest_len + i] = src[i];
+        i++;
+    }
+    dest[dest_len + i] = '\0';
+}
+
+char* concatenate_strings(int start, int end, char** argv) {
+    int total_length = 0;
+    for (int i = start; i <= end; i++) {
+        total_length += my_strlen(argv[i]) + 1; // +1 для пробела
+    }
+
+    char* result = (char*)malloc(total_length * sizeof(char));
+    if (result == NULL) {
+        printf("Memory allocation error\n");
+        return NULL;
+    }
+    result[0] = '\0';
+    for (int i = start; i <= end; i++) {
+        my_strcat(result, argv[i]);
+        if (i != end) {
+            my_strcat(result, " ");
+        }
+    }
+    return result;
+}
+
+kOpts parse_option(const char* option_str) {
+    if (strcmp(option_str, "-l") == 0) {
+        return OPT_L;
+    } else if (strcmp(option_str, "-r") == 0) {
+        return OPT_R;
+    } else if (strcmp(option_str, "-u") == 0) {
+        return OPT_U;
+    } else if (strcmp(option_str, "-n") == 0) {
+        return OPT_N;
+    } else if (strcmp(option_str, "-c") == 0) {
+        return OPT_C;
+    } else {
+        return OPT_INVALID;
+    }
+}
+
+int GetOpts(int argc, char** argv, ProgramOptions *options) {
+    if (argc < 3) return 1;
+
+    options->option = parse_option(argv[1]);
+    if (options->option == OPT_INVALID) return 1;
+
+    switch (options->option) {
+        case OPT_L:
+        case OPT_R:
+        case OPT_U:
+        case OPT_N:
+            options->str = concatenate_strings(2, argc - 1, argv);
+            if (!options->str) return 1;
+            break;
+        case OPT_C:
+            if (argc < 4) return 1;
+            for (int i = 0; argv[2][i] != '\0'; i++) {
+                if (!isdigit((unsigned char)argv[2][i])) return 1;
+            }
+            options->seed = (unsigned int)atoi(argv[2]);
+            options->strings = &argv[3];
+            options->count = argc - 3;
+            if (options->count < 1) return 1;
+            break;
+        default:
+            return 1;
+    }
+
+    return 0;
+}
+
+// -l: подсчет длины строки
+void HandlerOptL(ProgramOptions* options) {
+    if (options->str == NULL) {
+        printf("No string provided for -l flag\n");
+        return;
+    }
+    int n = my_strlen(options->str);
+    printf("%d\n", n);
+}
+
+// -r: переворот строки
+void HandlerOptR(ProgramOptions* options) {
+    if (options->str == NULL) {
+        printf("No string provided for -r flag\n");
+        return;
+    }
+    int len = my_strlen(options->str);
+
+    char* reversed = (char*)malloc((len + 1) * sizeof(char));
+    if (reversed == NULL) {
+        printf("Memory allocation error\n");
+        return;
+    }
+
+    for (int i = 0; i < len; i++) {
+        reversed[i] = options->str[len - 1 - i];
+    }
+    reversed[len] = '\0';
+
+    printf("%s\n", reversed);
+    free(reversed);
+}
+
+// -u: четные позиции в верхний регистр
+void HandlerOptU(ProgramOptions* options) {
+    if (options->str == NULL) {
+        printf("No string provided for -u flag\n");
+        return;
+    }
+    int len = my_strlen(options->str);
+    char* mod_str = (char*)malloc((len + 1) * sizeof(char));
+    if (mod_str == NULL) {
+        printf("Memory allocation error\n");
+        return;
+    }
+    my_strcpy(mod_str, options->str);
+
+    for (int i = 0; i < len; i++) {
+        if (i % 2 == 0) {
+            mod_str[i] = toupper((unsigned char)mod_str[i]);
+        }
+    }
+    printf("%s\n", mod_str);
+    free(mod_str);
+}
+
+// -n: перестановка символов
+void HandlerOptN(ProgramOptions* options) {
+    if (options->str == NULL) {
+        printf("No string provided for -n flag\n");
+        return;
+    }
+    int len = my_strlen(options->str);
+
+    char* new_str = (char*)malloc((len + 1) * sizeof(char));
+    if (new_str == NULL) {
+        printf("Memory allocation error\n");
+        return;
+    }
+
+    int j = 0;
+    for (int i = 0; i < len; i++) {
+        if (isdigit((unsigned char)options->str[i])) {
+            new_str[j++] = options->str[i];
+        }
+    }
+    for (int i = 0; i < len; i++) {
+        if (isalpha((unsigned char)options->str[i])) {
+            new_str[j++] = options->str[i];
+        }
+    }
+    for (int i = 0; i < len; i++) {
+        if (!isdigit((unsigned char)options->str[i]) && !isalpha((unsigned char)options->str[i])) {
+            new_str[j++] = options->str[i];
+        }
+    }
+    new_str[j] = '\0';
+
+    printf("%s\n", new_str);
+    free(new_str);
+}
+
+// -c: конкатенация строк (srand)
+void HandlerOptC(ProgramOptions* options) {
+    if (options->strings == NULL || options->count < 1) {
+        printf("No strings provided for -c flag\n");
+        return;
+    }
+
+    srand(options->seed);
+
+    int* indices = (int*)malloc(options->count * sizeof(int));
+    if (indices == NULL) {
+        printf("Memory allocation error\n");
+        return;
+    }
+    for (int i = 0; i < options->count; i++) {
+        indices[i] = i;
+    }
+
+    for (int i = options->count - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = indices[i];
+        indices[i] = indices[j];
+        indices[j] = temp;
+    }
+
+    int total_length = 0;
+    for (int i = 0; i < options->count; i++) {
+        total_length += my_strlen(options->strings[indices[i]]);
+    }
+
+    char* concatenated = (char*)malloc((total_length + 1) * sizeof(char));
+    if (concatenated == NULL) {
+        printf("Memory allocation error\n");
+        free(indices);
+        return;
+    }
+    concatenated[0] = '\0';
+
+    for (int i = 0; i < options->count; i++) {
+        my_strcat(concatenated, options->strings[indices[i]]);
+    }
+
+    printf("%s\n", concatenated);
+    free(concatenated);
+    free(indices);
+}
+
+void check_of_flag(const ProgramOptions* options) {
+    void (*handlers[5])(ProgramOptions*) = {
+        HandlerOptL,
+        HandlerOptR,
+        HandlerOptU,
+        HandlerOptN,
+        HandlerOptC
+    };
+
+    if (options->option >= OPT_L && options->option <= OPT_C) {
+        handlers[options->option]( (ProgramOptions*)options );
+    } else {
+        printf("Argument not found\n");
+    }
+}
+
+int main(int argc, char* argv[]) {
+    ProgramOptions options;
+
+    if (GetOpts(argc, argv, &options)) {
+        printf("Incorrect option or missing arguments\n");
+        return 1;
+    }
+
+    check_of_flag(&options);
+
+    if (options.option == OPT_L || options.option == OPT_R || options.option == OPT_U || options.option == OPT_N) {
+        free(options.str);
+    }
+
+    return 0;
+}
