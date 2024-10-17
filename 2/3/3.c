@@ -19,6 +19,11 @@ void Search_In_File(const char* substring, const char* filename) {
     char c;
 
     char* buffer = (char*)malloc(1);
+    if (!buffer) {
+        printf("Memory allocation failed!\n");
+        fclose(file);
+        return;
+    }
 
     printf("Searching in file: %s\n", filename);
 
@@ -29,11 +34,23 @@ void Search_In_File(const char* substring, const char* filename) {
             buffer_size = 0;
             free(buffer);
             buffer = (char*)malloc(1);
+            if (!buffer) {
+                printf("Memory allocation failed!\n");
+                fclose(file);
+                return;
+            }
             continue;
         }
 
         buffer_size++;
-        buffer = (char*)realloc(buffer, buffer_size);
+        char* temp_buffer = (char*)realloc(buffer, buffer_size);
+        if (!temp_buffer) {
+            printf("Memory allocation failed!\n");
+            free(buffer);
+            fclose(file);
+            return;
+        }
+        buffer = temp_buffer;
         buffer[buffer_size - 1] = c;
 
         if (buffer_size >= len_sub) {
