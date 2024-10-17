@@ -31,7 +31,7 @@ double recursive_pow(double base, int exponent) {
 }
 
 int main() {
-    double mean = geometric_mean(3.5, 2,5, 4.5, 8.0);
+    double mean = geometric_mean(3, 2.5, 4.5, 8.0);
     printf("Result of the geometric mean: %g\n", mean);
 
     double result = recursive_pow(4.5, 2);
