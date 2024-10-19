@@ -1,13 +1,30 @@
 ﻿#include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
-double integral(double (*func)(double), double a, double b, double eps);
-double func_a(double x);
-double func_b(double x);
-double func_c(double x);
-double func_d(double x);
+int is_valid_epsilon(const char* str) {
+    int has_decimal_point = 0;
+    int has_sign = 0;
+    int has_digit = 0;
 
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (isdigit(str[i])) {
+            has_digit = 1;
+        } else if (str[i] == '.') {
+            if (has_decimal_point) return 0;
+            has_decimal_point = 1;
+        } else if (str[i] == '+' || str[i] == '-') {
+            if (i > 0) return 0;
+            has_sign = 1;
+        } else {
+            return 0;
+        }
+    }
+
+    return has_digit;
+}
 
 double integral(double (*func)(double), double a, double b, double eps) {
     double n = 1.0;
@@ -54,8 +71,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    if (!is_valid_epsilon(argv[1])) {
+        printf("incorrect epsilon\n");
+        return 1;
+    }
+
     double epsilon = atof(argv[1]);
-    if (epsilon > 1) {
+    if (epsilon <= 0 || epsilon > 1) {
         printf("incorrect epsilon\n");
         return 1;
     }
