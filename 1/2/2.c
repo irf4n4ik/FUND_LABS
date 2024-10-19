@@ -165,7 +165,7 @@ double e_series(double epsilon) {
 
 double e_equation(double epsilon) {
     double a = 1.00;
-    double b = 6.00;
+    double b = 5.00;
     double x;
     while (fabs(b - a) >= epsilon) {
         x = (b + a) / 2;
