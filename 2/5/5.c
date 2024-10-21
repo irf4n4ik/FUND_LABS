@@ -4,6 +4,18 @@
 #include <string.h>
 #include <ctype.h>
 
+#define BUFFER_SIZE 100
+#define MAX_FIB 32
+#define MAX_OUTPUT 500
+
+typedef enum {
+    SUCCESS = 0,
+    ERR_INVALID_BASE = 1,
+    ERR_MEMORY_ALLOCATION = 2,
+    ERR_FILE_OPEN = 3,
+    ERR_INVALID_NUMBER = 4,
+} StatusCode;
+
 void int_to_roman(int num, char *buffer) {
     struct roman_numeral {
         int value;
@@ -30,11 +42,12 @@ void int_to_roman(int num, char *buffer) {
 }
 
 void int_to_zeckendorf(unsigned int num, char *buffer) {
-    int fib[32];
+    int fib[MAX_FIB];
     fib[0] = 1;
     fib[1] = 2;
     int count = 2;
-    while (fib[count - 1] + fib[count - 2] <= num) {
+
+    while (count < MAX_FIB && fib[count - 1] + fib[count - 2] <= num) {
         fib[count] = fib[count - 1] + fib[count - 2];
         count++;
     }
@@ -51,21 +64,20 @@ void int_to_zeckendorf(unsigned int num, char *buffer) {
             strcat(buffer, "0");
         }
     }
-    strcat(buffer, "1");
+    if (used_fib) {
+        strcat(buffer, "1");
+    }
 }
 
 void int_to_base(int num, int base, char *buffer, int uppercase) {
-    char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+    const char *digits = uppercase ? "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" : "0123456789abcdefghijklmnopqrstuvwxyz";
     char temp[65];
     int index = 0;
     
-    if (uppercase) {
-        for (int i = 10; i < 36; i++) {
-            digits[i] = toupper(digits[i]);
-        }
+    if (base < 2 || base > 36) {
+        buffer[0] = '\0';
+        return;
     }
-    
-    if (base < 2 || base > 36) base = 10;
     
     int negative = 0;
     if (num < 0) {
@@ -82,8 +94,6 @@ void int_to_base(int num, int base, char *buffer, int uppercase) {
         temp[index++] = '-';
     }
     
-    temp[index] = '\0';
-    
     for (int i = 0; i < index; i++) {
         buffer[i] = temp[index - 1 - i];
     }
@@ -91,7 +101,7 @@ void int_to_base(int num, int base, char *buffer, int uppercase) {
 }
 
 int base_to_decimal(const char *str, int base) {
-    return strtol(str, NULL, base);
+    return (int)strtol(str, NULL, base);
 }
 
 void memory_dump_int(int num, char *buffer) {
@@ -115,20 +125,20 @@ int oversprintf(char *str, const char *format, ...) {
             format++;
             if (*format == 'R' && *(format + 1) == 'o') {  //%Ro
                 int num = va_arg(args, int);
-                char buffer[100];
+                char buffer[BUFFER_SIZE];
                 int_to_roman(num, buffer);
                 s += sprintf(s, "%s", buffer);
                 format += 2;
             } else if (*format == 'Z' && *(format + 1) == 'r') {  //%Zr
                 unsigned int num = va_arg(args, unsigned int);
-                char buffer[100];
+                char buffer[BUFFER_SIZE];
                 int_to_zeckendorf(num, buffer);
                 s += sprintf(s, "%s", buffer);
                 format += 2;
             } else if (*format == 'C' && (*(format + 1) == 'v' || *(format + 1) == 'V')) {  //%Cv / %CV
                 int num = va_arg(args, int);
                 int base = va_arg(args, int);
-                char buffer[100];
+                char buffer[BUFFER_SIZE];
                 int uppercase = (*(format + 1) == 'V') ? 1 : 0;
                 int_to_base(num, base, buffer, uppercase);
                 s += sprintf(s, "%s", buffer);
@@ -141,7 +151,7 @@ int oversprintf(char *str, const char *format, ...) {
                 format += 2;
             } else if (*format == 'm' && (*(format + 1) == 'i' || *(format + 1) == 'u')) {  //%mi / %mu
                 int num = va_arg(args, int);
-                char buffer[100] = "";
+                char buffer[BUFFER_SIZE] = "";
                 memory_dump_int(num, buffer);
                 s += sprintf(s, "%s", buffer);
                 format += 2;
@@ -168,20 +178,20 @@ int overfprintf(FILE *stream, const char *format, ...) {
             format++;
             if (*format == 'R' && *(format + 1) == 'o') {  //%Ro
                 int num = va_arg(args, int);
-                char buffer[100];
+                char buffer[BUFFER_SIZE];
                 int_to_roman(num, buffer);
                 fprintf(stream, "%s", buffer);
                 format += 2;
             } else if (*format == 'Z' && *(format + 1) == 'r') {  //%Zr
                 unsigned int num = va_arg(args, unsigned int);
-                char buffer[100];
+                char buffer[BUFFER_SIZE];
                 int_to_zeckendorf(num, buffer);
                 fprintf(stream, "%s", buffer);
                 format += 2;
             } else if (*format == 'C' && (*(format + 1) == 'v' || *(format + 1) == 'V')) {  //%Cv / %CV
                 int num = va_arg(args, int);
                 int base = va_arg(args, int);
-                char buffer[100];
+                char buffer[BUFFER_SIZE];
                 int uppercase = (*(format + 1) == 'V') ? 1 : 0;
                 int_to_base(num, base, buffer, uppercase);
                 fprintf(stream, "%s", buffer);
@@ -194,7 +204,7 @@ int overfprintf(FILE *stream, const char *format, ...) {
                 format += 2;
             } else if (*format == 'm' && (*(format + 1) == 'i' || *(format + 1) == 'u')) {  //%mi / %mu
                 int num = va_arg(args, int);
-                char buffer[100] = "";
+                char buffer[BUFFER_SIZE] = "";
                 memory_dump_int(num, buffer);
                 fprintf(stream, "%s", buffer);
                 format += 2;
@@ -212,12 +222,12 @@ int overfprintf(FILE *stream, const char *format, ...) {
 }
 
 int main() {
-    char buffer[500];
+    char buffer[MAX_OUTPUT];
 
     FILE *file = fopen("output.txt", "w");
     if (file == NULL) {
         printf("Error opening file!\n");
-        return 1;
+        return ERR_FILE_OPEN;
     }
     
     //%Ro
@@ -251,5 +261,5 @@ int main() {
 
     fclose(file);
     
-    return 0;
+    return SUCCESS;
 }
