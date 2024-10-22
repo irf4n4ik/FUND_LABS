@@ -34,7 +34,7 @@ double func1(double x) {
 }
 
 double func2(double x) {
-    return x * x - 4.0;
+    return pow(x - 1, 2) / (x - 1);
 }
 
 enum StatusCode read_input(double* x0, double* xk, double* eps) {
