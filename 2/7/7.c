@@ -30,11 +30,11 @@ double dichotomy(const double (*func)(double), double x0, double xk, double eps,
 }
 
 double func1(double x) {
-    return 2.0 - x;
+    return pow(x - 1, 2) / (x - 1);
 }
 
 double func2(double x) {
-    return pow(x - 1, 2) / (x - 1);
+    return x * x - 4.0;
 }
 
 enum StatusCode read_input(double* x0, double* xk, double* eps) {

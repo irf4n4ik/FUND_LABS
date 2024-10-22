@@ -114,6 +114,38 @@ void memory_dump_int(int num, char *buffer) {
     }
 }
 
+void memory_dump_unsigned_int(unsigned int num, char *buffer) {
+    unsigned char *bytes = (unsigned char*)&num;
+    for (int i = sizeof(num) - 1; i >= 0; i--) {
+        for (int j = 7; j >= 0; j--) {
+            strcat(buffer, (bytes[i] & (1 << j)) ? "1" : "0");
+        }
+        strcat(buffer, " ");
+    }
+}
+
+void memory_dump_double(double num, char *buffer) {
+    unsigned char *bytes = (unsigned char*)&num;
+    for (int i = sizeof(num) - 1; i >= 0; i--) {
+        for (int j = 7; j >= 0; j--) {
+            strcat(buffer, (bytes[i] & (1 << j)) ? "1" : "0");
+        }
+        strcat(buffer, " ");
+    }
+}
+
+void memory_dump_float(float num, char *buffer) {
+    unsigned char *bytes = (unsigned char*)&num;
+    for (int i = sizeof(num) - 1; i >= 0; i--) {
+        for (int j = 7; j >= 0; j--) {
+            strcat(buffer, (bytes[i] & (1 << j)) ? "1" : "0");
+        }
+        strcat(buffer, " ");
+    }
+}
+
+
+
 int oversprintf(char *str, const char *format, ...) {
     va_list args;
     va_start(args, format);
@@ -149,13 +181,32 @@ int oversprintf(char *str, const char *format, ...) {
                 int num = base_to_decimal(num_str, base);
                 s += sprintf(s, "%d", num);
                 format += 2;
-            } else if (*format == 'm' && (*(format + 1) == 'i' || *(format + 1) == 'u')) {  //%mi / %mu
+            } else if (*format == 'm' && *(format + 1) == 'i') {  //%mi
                 int num = va_arg(args, int);
                 char buffer[BUFFER_SIZE] = "";
                 memory_dump_int(num, buffer);
                 s += sprintf(s, "%s", buffer);
                 format += 2;
-            } else {
+            } else if (*format == 'm' && (*(format + 1) == 'u')) {  // %mu
+                int num = va_arg(args, int);
+                char buffer[BUFFER_SIZE] = "";
+                memory_dump_unsigned_int(num, buffer);
+                s += sprintf(s, "%s", buffer);
+                format += 2;
+            } else if (*format == 'm' && (*(format + 1) == 'd')) {  // %md
+                int num = va_arg(args, int);
+                char buffer[BUFFER_SIZE] = "";
+                memory_dump_double(num, buffer);
+                s += sprintf(s, "%s", buffer);
+                format += 2;
+            } else if (*format == 'm' && (*(format + 1) == 'f')) {  // %mf
+                int num = va_arg(args, int);
+                char buffer[BUFFER_SIZE] = "";
+                memory_dump_float(num, buffer);
+                s += sprintf(s, "%s", buffer);
+                format += 2;
+            }
+             else {
                 *s++ = '%';
             }
         } else {
@@ -202,10 +253,28 @@ int overfprintf(FILE *stream, const char *format, ...) {
                 int num = base_to_decimal(num_str, base);
                 fprintf(stream, "%d", num);
                 format += 2;
-            } else if (*format == 'm' && (*(format + 1) == 'i' || *(format + 1) == 'u')) {  //%mi / %mu
+            } else if (*format == 'm' && *(format + 1) == 'i') {  //%mi
                 int num = va_arg(args, int);
                 char buffer[BUFFER_SIZE] = "";
                 memory_dump_int(num, buffer);
+                fprintf(stream, "%s", buffer);
+                format += 2;
+            } else if (*format == 'm' && (*(format + 1) == 'u')) {  // %mu
+                int num = va_arg(args, int);
+                char buffer[BUFFER_SIZE] = "";
+                memory_dump_unsigned_int(num, buffer);
+                fprintf(stream, "%s", buffer);
+                format += 2;
+            } else if (*format == 'm' && (*(format + 1) == 'd')) {  // %md
+                int num = va_arg(args, int);
+                char buffer[BUFFER_SIZE] = "";
+                memory_dump_double(num, buffer);
+                fprintf(stream, "%s", buffer);
+                format += 2;
+            } else if (*format == 'm' && (*(format + 1) == 'f')) {  // %mf
+                int num = va_arg(args, int);
+                char buffer[BUFFER_SIZE] = "";
+                memory_dump_float(num, buffer);
                 fprintf(stream, "%s", buffer);
                 format += 2;
             } else {

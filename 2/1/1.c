@@ -1,7 +1,4 @@
-﻿#define _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_DEPRECATE  
-#define _CRT_NONSTDC_NO_DEPRECATE
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
@@ -58,7 +55,7 @@ char* concatenate_strings(int start, int end, char** argv) {
 
     char* result = (char*)malloc(total_length * sizeof(char));
     if (result == NULL) {
-        printf("Ошибка выделения памяти\n");
+        printf("Memory allocation error\n");
         return NULL;
     }
     result[0] = '\0';
@@ -117,27 +114,27 @@ int GetOpts(int argc, char** argv, ProgramOptions *options) {
     return 0;
 }
 
-// -l (подсчёт длины строки)
+// -l
 void HandlerOptL(ProgramOptions* options) {
     if (options->str == NULL) {
-        printf("Строка для флага -l не предоставлена\n");
+        printf("String for flag -l is not provided\n");
         return;
     }
     int n = my_strlen(options->str);
     printf("%d\n", n);
 }
 
-// -r (переворот строки)
+// -r
 void HandlerOptR(ProgramOptions* options) {
     if (options->str == NULL) {
-        printf("Строка для флага -r не предоставлена\n");
+        printf("String for flag -r is not provided\n");
         return;
     }
     int len = my_strlen(options->str);
 
     char* reversed = (char*)malloc((len + 1) * sizeof(char));
     if (reversed == NULL) {
-        printf("Ошибка выделения памяти\n");
+        printf("Memory allocation error\n");
         return;
     }
 
@@ -150,16 +147,15 @@ void HandlerOptR(ProgramOptions* options) {
     free(reversed);
 }
 
-// -u (четные позиции в верхний регистр)
 void HandlerOptU(ProgramOptions* options) {
     if (options->str == NULL) {
-        printf("Строка для флага -u не предоставлена\n");
+        printf("String for flag -u is not provided\n");
         return;
     }
     int len = my_strlen(options->str);
     char* mod_str = (char*)malloc((len + 1) * sizeof(char));
     if (mod_str == NULL) {
-        printf("Ошибка выделения памяти\n");
+        printf("Memory allocation error\n");
         return;
     }
     my_strcpy(mod_str, options->str);
@@ -173,17 +169,16 @@ void HandlerOptU(ProgramOptions* options) {
     free(mod_str);
 }
 
-// -n (перестановка символов)
 void HandlerOptN(ProgramOptions* options) {
     if (options->str == NULL) {
-        printf("Строка для флага -n не предоставлена\n");
+        printf("String for flag -n is not provided\n");
         return;
     }
     int len = my_strlen(options->str);
 
     char* new_str = (char*)malloc((len + 1) * sizeof(char));
     if (new_str == NULL) {
-        printf("Ошибка выделения памяти\n");
+        printf("Memory allocation error\n");
         return;
     }
 
@@ -209,10 +204,9 @@ void HandlerOptN(ProgramOptions* options) {
     free(new_str);
 }
 
-// -c (конкатенация строк в псевдослучайном порядке)
 void HandlerOptC(ProgramOptions* options) {
     if (options->strings == NULL || options->count < 1) {
-        printf("Строки для флага -c не предоставлены\n");
+        printf("Strings for flag -c are not provided\n");
         return;
     }
 
@@ -220,14 +214,13 @@ void HandlerOptC(ProgramOptions* options) {
 
     int* indices = (int*)malloc(options->count * sizeof(int));
     if (indices == NULL) {
-        printf("Ошибка выделения памяти\n");
+        printf("Memory allocation error\n");
         return;
     }
     for (int i = 0; i < options->count; i++) {
         indices[i] = i;
     }
 
-    // Перемешивание с помощью Фишера-Йетса
     for (int i = options->count - 1; i > 0; i--) {
         int j = rand() % (i + 1);
         int temp = indices[i];
@@ -242,7 +235,7 @@ void HandlerOptC(ProgramOptions* options) {
 
     char* concatenated = (char*)malloc((total_length + 1) * sizeof(char));
     if (concatenated == NULL) {
-        printf("Ошибка выделения памяти\n");
+        printf("Memory allocation error\n");
         free(indices);
         return;
     }
@@ -269,7 +262,7 @@ void check_of_flag(const ProgramOptions* options) {
     if (options->option >= OPT_L && options->option <= OPT_C) {
         handlers[options->option]( (ProgramOptions*)options );
     } else {
-        printf("Неверный аргумент\n");
+        printf("Invalid argument\n");
     }
 }
 
@@ -280,7 +273,7 @@ int main(int argc, char* argv[]) {
     options.count = 0;
 
     if (GetOpts(argc, argv, &options)) {
-        printf("Неверная опция или отсутствуют аргументы\n");
+        printf("Invalid option or missing arguments\n");
         return 1;
     }
 
