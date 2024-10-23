@@ -80,6 +80,7 @@ void Search_In_File(const char* substring, const char* filename) {
     free(buffer);
 }
 
+
 void Search_from_files(int num_of_files, ...) {
     va_list file_list;
     va_start(file_list, num_of_files);
@@ -95,7 +96,7 @@ void Search_from_files(int num_of_files, ...) {
 }
 
 int main() {
-    Search_from_files(4, "test", "1.txt", "2.txt", "3.txt");
+    Search_from_files(4, "  ", "1.txt", "2.txt", "3.txt");
 
     return 0;
 }
