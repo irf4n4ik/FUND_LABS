@@ -1,5 +1,4 @@
-﻿#define _CRT_SECURE_NO_WARNINGS
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <math.h>
 #include <stdarg.h>
 
@@ -58,7 +57,7 @@ int recursive_pow(double base, int exponent, double *result) {
 
 int main() {
     double mean;
-    int status = geometric_mean(3, &mean, 2.5, 4.5, 8.0);
+    int status = geometric_mean(3, &mean, 2.5, 0.0, 8.0);
     if (status == SUCCESS) {
         printf("Result of the geometric mean: %g\n", mean);
     } else {
@@ -66,7 +65,7 @@ int main() {
     }
 
     double power_result;
-    status = recursive_pow(4.5, 2, &power_result);
+    status = recursive_pow(2, -2, &power_result);
     if (status == SUCCESS) {
         printf("The result of recursive pow: %g\n", power_result);
     } else {
