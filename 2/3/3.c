@@ -4,6 +4,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+void compute_prefix_function(const char* pattern, int* prefix, int len_sub) {
+    int length = 0;
+    prefix[0] = 0;
+
+    for (int i = 1; i < len_sub; i++) {
+        while (length > 0 && pattern[i] != pattern[length]) {
+            length = prefix[length - 1];
+        }
+        if (pattern[i] == pattern[length]) {
+            length++;
+        }
+        prefix[i] = length;
+    }
+}
+
 void Search_In_File(const char* substring, const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
@@ -12,18 +27,27 @@ void Search_In_File(const char* substring, const char* filename) {
     }
 
     int len_sub = strlen(substring);
-    int line_number = 1;
-    int match_count = 0;
-    int position_in_line = 1;
-    int buffer_size = 0;
-    char c;
-
-    char* buffer = (char*)malloc(1);
-    if (!buffer) {
-        printf("Memory allocation failed!\n");
+    if (len_sub == 0) {
+        printf("Substring is empty!\n");
         fclose(file);
         return;
     }
+
+    int* prefix = (int*)malloc(len_sub * sizeof(int));
+    if (!prefix) {
+        printf("Memory allocation failed for prefix array!\n");
+        fclose(file);
+        return;
+    }
+
+    compute_prefix_function(substring, prefix, len_sub);
+
+    int line_number = 1;
+    int match_count = 0;
+    int position_in_line = 1;
+    int j = 0;
+
+    char c;
 
     printf("Searching in file: %s\n", filename);
 
@@ -31,42 +55,20 @@ void Search_In_File(const char* substring, const char* filename) {
         if (c == '\n') {
             line_number++;
             position_in_line = 1;
-            buffer_size = 0;
-            free(buffer);
-            buffer = (char*)malloc(1);
-            if (!buffer) {
-                printf("Memory allocation failed!\n");
-                fclose(file);
-                return;
-            }
+            j = 0;
             continue;
         }
 
-        buffer_size++;
-        char* temp_buffer = (char*)realloc(buffer, buffer_size);
-        if (!temp_buffer) {
-            printf("Memory allocation failed!\n");
-            free(buffer);
-            fclose(file);
-            return;
+        while (j > 0 && c != substring[j]) {
+            j = prefix[j - 1];
         }
-        buffer = temp_buffer;
-        buffer[buffer_size - 1] = c;
-
-        if (buffer_size >= len_sub) {
-            int match = 1;
-
-            for (int i = 0; i < len_sub; i++) {
-                if (buffer[buffer_size - len_sub + i] != substring[i]) {
-                    match = 0;
-                    break;
-                }
-            }
-
-            if (match) {
-                match_count++;
-                printf("Match #%d found at line %d, position %d\n", match_count, line_number, position_in_line - len_sub + 1);
-            }
+        if (c == substring[j]) {
+            j++;
+        }
+        if (j == len_sub) {
+            match_count++;
+            printf("Match #%d found at line %d, position %d\n", match_count, line_number, position_in_line - len_sub + 1);
+            j = prefix[j - 1];
         }
 
         position_in_line++;
@@ -77,9 +79,8 @@ void Search_In_File(const char* substring, const char* filename) {
     }
 
     fclose(file);
-    free(buffer);
+    free(prefix);
 }
-
 
 void Search_from_files(int num_of_files, ...) {
     va_list file_list;
@@ -96,7 +97,7 @@ void Search_from_files(int num_of_files, ...) {
 }
 
 int main() {
-    Search_from_files(4, "  ", "1.txt", "2.txt", "3.txt");
+    Search_from_files(4, "test", "1.txt", "2.txt", "3.txt");
 
     return 0;
 }
